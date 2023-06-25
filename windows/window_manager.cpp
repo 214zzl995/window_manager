@@ -702,7 +702,7 @@ void WindowManager::SetTitleBarStyle(const flutter::EncodableMap& args) {
   if (version <= 22000) {
       margins = { -1, -1, 0, 0 };
   }else{
-      margins = {0, 0, 0, 0};
+      margins = {100, 100, 0, 0};
   }
   HWND hWnd = GetMainWindow();
   RECT rect;
