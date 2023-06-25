@@ -14,6 +14,8 @@
 #include <map>
 #include <memory>
 #include <sstream>
+#include <iostream>
+#include <winternl.h>
 
 #pragma comment(lib, "dwmapi.lib")
 
@@ -670,6 +672,24 @@ void WindowManager::SetTitle(const flutter::EncodableMap& args) {
   SetWindowText(GetMainWindow(), converter.from_bytes(title).c_str());
 }
 
+int getSysOpType()
+{
+	int ret = 0;
+	NTSTATUS(WINAPI * RtlGetVersion)(PRTL_OSVERSIONINFOW);
+	RTL_OSVERSIONINFOW osInfo;
+
+	*(FARPROC*)&RtlGetVersion = GetProcAddress(GetModuleHandleA("ntdll"), "RtlGetVersion");
+
+	if (NULL != RtlGetVersion)
+	{
+		osInfo.dwOSVersionInfoSize = sizeof(osInfo);
+		RtlGetVersion(&osInfo);
+		ret = osInfo.dwBuildNumber;
+	}
+	return ret;
+}
+
+
 void WindowManager::SetTitleBarStyle(const flutter::EncodableMap& args) {
   title_bar_style_ =
       std::get<std::string>(args.at(flutter::EncodableValue("titleBarStyle")));
@@ -677,7 +697,13 @@ void WindowManager::SetTitleBarStyle(const flutter::EncodableMap& args) {
   // TitleBarStyle.normal/hidden
   is_frameless_ = false;
 
-  MARGINS margins = {0, 0, 0, 0};
+  int version = getSysOpType();
+  MARGINS margins;
+  if (version <= 22000) {
+      margins = { -1, -1, 0, 0 };
+  }else{
+      margins = {0, 0, 0, 0};
+  }
   HWND hWnd = GetMainWindow();
   RECT rect;
   GetWindowRect(hWnd, &rect);
